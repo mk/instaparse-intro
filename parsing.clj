@@ -51,9 +51,6 @@
 (p "down right repeat 2 [ up repeat 5 [ up right ] right ] right")
 
 
-(insta/transform {:number clojure.edn/read-string
-                  #_#_:S identity} (p "down repeat 2 [ down ]"))
-
 (def p
   (insta/parser
    "S = expr+
@@ -70,12 +67,10 @@
 (p "down right repeat 2 [ up repeat 5 [ up right ] right ] right")
 
 
-(def move {"right" [1 0]
-           "left"  [-1 0]
-           "up"    [0 -1]
-           "down"  [0 1]})
-
-
+(def move {"right" {:x 1}
+           "left"  {:x -1}
+           "up"    {:y -1}
+           "down"  {:y 1}})
 
 
 (move "up")
@@ -86,20 +81,18 @@
                   :move move
                   :S (partial map +)} (p "down down down"))
 
-
-(map + [0 1] [1 2] [2 3])
-
+(merge-with + {:x 1 :y 0} {:x 100 :y -99})
+(merge-with + (move "up") (move "up") (move "left"))
 
 
 (defn ->pos [e]
   (->> e p (insta/transform {:number clojure.edn/read-string
                              :move move
                              :repeat (fn [times & expr]
-                                       (map * [times times] (apply map + expr)))
-                             :expr identity
-                             :S (partial map +)})))
+                                       (apply concat (repeat times expr)))
+                             :S (comp (partial apply merge-with +)
+                                      flatten)})))
 
-(map * [2 2] [3 5])
 
 (apply concat (repeat 2 [:up :up]))
 
